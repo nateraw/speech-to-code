@@ -42,7 +42,7 @@ def speech_to_code(file):
 
 iface = gr.Interface(
     fn=speech_to_code,
-    inputs=gr.inputs.Audio(source="microphone", type="file", label=None),
+    inputs=gr.inputs.Audio(source="microphone", type="file"),
     outputs="text"
 )
 iface.launch(share=True)
