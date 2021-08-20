@@ -45,4 +45,4 @@ iface = gr.Interface(
     inputs=gr.inputs.Audio(source="microphone", type="file"),
     outputs="text"
 )
-iface.launch(share=True)
+iface.launch()
