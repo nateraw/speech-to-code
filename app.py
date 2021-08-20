@@ -40,9 +40,8 @@ def speech_to_code(file):
     generated_text = tokenizer.decode(last_tokens)
     return text + generated_text
 
-iface = gr.Interface(
+gr.Interface(
     fn=speech_to_code,
     inputs=gr.inputs.Audio(source="microphone", type="file"),
     outputs="text"
-)
-iface.launch()
+).launch(debug=True)
