@@ -1,7 +1,22 @@
 import gradio as gr
-from huggingface_hub import snapshot_download
 from speechbrain.pretrained import EncoderDecoderASR
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from huggingface_hub import snapshot_download
+
+
+# Load ASR Model
+asr_model = EncoderDecoderASR.from_hparams(
+    source="speechbrain/asr-transformer-transformerlm-librispeech",
+    savedir="pretrained_models/asr-transformer-transformerlm-librispeech",
+    run_opts={"device":"cuda"}
+)
+
+# Download Code Generation Model Repo
+repo_dir = snapshot_download("NovelAI/genji-python-6B-split")
+
+# Load Code Generation Model + Tokenizer
+model = AutoModelForCausalLM.from_pretrained(repo_dir + "/model").half().eval().cuda()
+tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neo-2.7B")
 
 
 def speech_to_code(file):
@@ -19,37 +34,15 @@ def speech_to_code(file):
         repetition_penalty=1.125,
         min_length=1,
         max_length=len(tokens[0]) + 400,
-        pad_token_id=tokenizer.eos_token_id,
+        pad_token_id=tokenizer.eos_token_id
     )
-    last_tokens = generated_tokens[0][len(tokens[0]) :]
+    last_tokens = generated_tokens[0][len(tokens[0]):]
     generated_text = tokenizer.decode(last_tokens)
     return text + generated_text
 
-
-def main():
-    # Load ASR Model
-    asr_model = EncoderDecoderASR.from_hparams(
-        source="speechbrain/asr-transformer-transformerlm-librispeech",
-        savedir="pretrained_models/asr-transformer-transformerlm-librispeech",
-        run_opts={"device": "cuda"},
-    )
-
-    # Download Code Generation Model Repo
-    repo_dir = snapshot_download("NovelAI/genji-python-6B-split")
-
-    # Load Code Generation Model + Tokenizer
-    model = (
-        AutoModelForCausalLM.from_pretrained(repo_dir + "/model").half().eval().cuda()
-    )
-    tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-neo-2.7B")
-
-    iface = gr.Interface(
-        fn=speech_to_code,
-        inputs=gr.inputs.Audio(source="microphone", type="file", label=None),
-        outputs="text",
-    )
-    iface.launch(share=True)
-
-
-if __name__ == "__main__":
-    main()
+iface = gr.Interface(
+    fn=speech_to_code,
+    inputs=gr.inputs.Audio(source="microphone", type="file", label=None),
+    outputs="text"
+)
+iface.launch(share=True)
